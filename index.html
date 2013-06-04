@@ -1,0 +1,186 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Thresholderbot by mccutchen</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>Thresholderbot</h1>
+        <p>A personal software robot that will monitor your Twitter timeline and send you an email every time it sees a link more than a certain number of times.</p>
+
+        <p class="view"><a href="https://github.com/mccutchen/thresholderbot">View the Project on GitHub <small>mccutchen/thresholderbot</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/mccutchen/thresholderbot/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/mccutchen/thresholderbot/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/mccutchen/thresholderbot">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h1>
+<a name="thresholderbot" class="anchor" href="#thresholderbot"><span class="octicon octicon-link"></span></a>Thresholderbot</h1>
+
+<p>Thresholderbot is a simple app that grew out of this conversation with
+<a href="https://twitter.com/mattlemay">@mattlemay</a>:</p>
+
+<p><img src="resources/germ-of-an-idea.png" alt=""></p>
+
+<p>It's a personal software robot that will monitor your Twitter timeline and
+send you an email every time it sees a link more than a certain <em>threshold</em>
+number of times. This is super-stupid <strong>Data Science</strong> built on the <strong>Big
+Data</strong> of your personal Twitter timeline.</p>
+
+<p>The emails it sends you look like this:</p>
+
+<p><img src="resources/thresholderbot-email.png" alt=""></p>
+
+<p>Thresholderbot is designed to be deployed for free on <a href="https://heroku.com/">Heroku</a>.</p>
+
+<h2>
+<a name="prerequisites" class="anchor" href="#prerequisites"><span class="octicon octicon-link"></span></a>Prerequisites</h2>
+
+<ol>
+<li>A <a href="https://heroku.com/">Heroku</a> account</li>
+<li>The <a href="https://toolbelt.heroku.com/">Heroku Toolbelt</a>
+</li>
+<li>A <a href="https://dev.twitter.com/apps">Twitter app</a> whose credentials Thresholderbot can use to
+access your timeline</li>
+</ol><h2>
+<a name="installation" class="anchor" href="#installation"><span class="octicon octicon-link"></span></a>Installation</h2>
+
+<p>Installation is pretty straightforward (hopefully). The most complicated
+part will be figuring out the Twitter credentials to use.</p>
+
+<p>First, clone this git repo:</p>
+
+<div class="highlight"><pre>git clone git@github.com:mccutchen/thresholderbot.git
+<span class="nb">cd </span>thresholderbot
+</pre></div>
+
+<p>Next, set up the Heroku app:</p>
+
+<div class="highlight"><pre>heroku create
+heroku addons:add rediscloud:20
+heroku addons:add mandrill:starter
+</pre></div>
+
+<p>Create an appropriate config file. I recommend keeping your config in
+a <code>.env</code> file, <a href="https://devcenter.heroku.com/articles/config-vars#local-setup">for use with Foreman and the heroku-config plugin</a>.</p>
+
+<p>Here's what your Heroku environment should look like:</p>
+
+<div class="highlight"><pre>cat .env
+</pre></div>
+
+<div class="highlight"><pre><span class="c"># Twitter app and access token credentials</span>
+<span class="nv">CONSUMER_KEY</span><span class="o">=</span>aaa
+<span class="nv">CONSUMER_SECRET</span><span class="o">=</span>bbb
+<span class="nv">ACCESS_TOKEN_KEY</span><span class="o">=</span>xxx
+<span class="nv">ACCESS_TOKEN_SECRET</span><span class="o">=</span>yyy
+
+<span class="c"># Set your threshold (defaults to 5)</span>
+<span class="nv">THRESHOLD</span><span class="o">=</span>5
+
+<span class="c"># Recipient of reports</span>
+<span class="nv">TO_ADDRESS</span><span class="o">=</span>you@yourdomain.com
+</pre></div>
+
+<p><strong>A note on access tokens:</strong> To do its job, Thresholderbot must be granted
+access to your account by way of OAuth tokens issued for a Twitter app
+connected to your account. This is probably the trickiest part of configuring
+Thresholderbot. If you have already created a Twitter app, you can go ahead and
+<a href="https://dev.twitter.com/docs/auth/tokens-devtwittercom">generate the appropriate credentials</a>.
+Otherwise, you'll need to <a href="https://dev.twitter.com/apps">create a new Twitter app</a> first, then
+<a href="https://dev.twitter.com/docs/auth/tokens-devtwittercom">generate the appropriate credentials</a>.</p>
+
+<p>Push your config out to Heroku:</p>
+
+<div class="highlight"><pre>heroku plugins:install git://github.com/ddollar/heroku-config.git
+heroku config:push
+</pre></div>
+
+<p>Deploy to heroku and scale up to one process:</p>
+
+<div class="highlight"><pre>git push heroku master
+heroku ps:scale <span class="nv">thresholderbot</span><span class="o">=</span>1
+</pre></div>
+
+<h3>
+<a name="verify-that-its-working" class="anchor" href="#verify-that-its-working"><span class="octicon octicon-link"></span></a>Verify that it's working</h3>
+
+<p>Watch the logs for a little while:</p>
+
+<div class="highlight"><pre>heroku logs -t
+</pre></div>
+
+<p>You should see some messages like this:</p>
+
+<pre><code>2013-06-04T16:30:07.448916+00:00 heroku[api]: Scale to thresholderbot=1 by mccutchen@gmail.com
+2013-06-04T16:30:10.148498+00:00 heroku[thresholderbot.1]: Starting process with command `python thresholderbot.py`
+2013-06-04T16:30:11.399506+00:00 heroku[thresholderbot.1]: State changed from starting to up
+2013-06-04T16:30:48.969903+00:00 app[thresholderbot.1]: INFO thresholderbot.py:22: Got 462 friends on startup
+</code></pre>
+
+<p>When you see the message about friends on startup, you know your Thresholderbot is configured correctly.</p>
+
+<h2>
+<a name="adjusting-the-threshold" class="anchor" href="#adjusting-the-threshold"><span class="octicon octicon-link"></span></a>Adjusting the threshold</h2>
+
+<p>The default threshold is <strong>5</strong>, which means you'll only receive emails for
+links shared at least 5 times by accounts you follow on Twitter. You'll
+probably wan to adjust the threshold as necessary to tune how many emails you
+get from Thresholderbot, depending on the nature of the accounts you follow
+and how much overlap there is in the content they share.</p>
+
+<p>For my personal account, I've found that a threshold of 4 seems to hit the
+right balance of signal to noise.</p>
+
+<p>Updating the threshold is easy and (essentially) instant. For example, if you
+want to receive more emails from Thresholderbot, you might want to set your
+threshold at 2:</p>
+
+<div class="highlight"><pre>heroku config:set <span class="nv">THRESHOLD</span><span class="o">=</span>2
+</pre></div>
+
+<h2>
+<a name="local-developmenttesting" class="anchor" href="#local-developmenttesting"><span class="octicon octicon-link"></span></a>Local Development/Testing</h2>
+
+<p>To run a Thresholderbot locally, you'll make sure you have the following
+prerequisites:</p>
+
+<ol>
+<li>
+<a href="https://github.com/ddollar/foreman">foreman</a> (installed by the Heroku Toolbelt)</li>
+<li><a href="http://www.pip-installer.org/">pip</a></li>
+<li><a href="http://redis.io/">redis</a></li>
+</ol><p>Once those are met, running locally should be as simple as:</p>
+
+<div class="highlight"><pre>pip install -r requirements.txt
+foreman start
+</pre></div>
+
+<h2>
+<a name="contributing" class="anchor" href="#contributing"><span class="octicon octicon-link"></span></a>Contributing</h2>
+
+<p>Suggestions/ideas/insults/pull requests are welcome!</p>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/mccutchen">mccutchen</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>
